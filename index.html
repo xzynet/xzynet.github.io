@@ -1,18 +1,604 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <title>学知云课记 XZY Notes</title>
-  <meta name="description" content="跨浏览器网课笔记扩展：视频截图、时间戳笔记、字幕检索、本地语音转写、Markdown 导出。">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>学知云课记 XZY Notes — 开源网课笔记扩展</title>
+<meta name="description" content="学知云课记（XZY Notes）：免费开源的浏览器网课笔记扩展，支持 Chrome / Edge / Firefox。视频截图、时间戳回跳、字幕全文检索、本地语音转写、Markdown 导出，数据全部本地存储。">
+<!-- Google Search Console 验证：把 GSC 给你的 meta 标签粘贴在下面这一行位置 -->
+<link rel="canonical" href="https://xzynet.github.io/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="学知云课记 XZY Notes — 开源网课笔记扩展">
+<meta property="og:description" content="视频截图、时间戳回跳、字幕检索、本地语音转写、Markdown 导出。免登录、永久免费、数据本地存储。">
+<meta property="og:url" content="https://xzynet.github.io/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2300D1B2'/%3E%3Cpath d='M20 14h16l10 10v26a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4z' fill='none' stroke='white' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M24 34h14M24 42h10' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "学知云课记 XZY Notes",
+  "applicationCategory": "BrowserApplication",
+  "operatingSystem": "Chrome, Edge, Firefox",
+  "description": "开源网课笔记扩展：视频截图、时间戳回跳、字幕全文检索、本地语音转写、Markdown 导出。",
+  "url": "https://xzynet.github.io/",
+  "downloadUrl": "https://chromewebstore.google.com/detail/xzy-notes/cddgcjiapaahlnaameonmikdcbogabfp",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" },
+  "author": { "@type": "Organization", "name": "学知云", "url": "https://www.xzynet.com/" },
+  "isAccessibleForFree": true,
+  "license": "https://opensource.org/licenses/MIT"
+}
+</script>
+<style>
+:root{
+  --green:#00D1B2;
+  --green-deep:#009e88;
+  --green-ink:#0b7a6a;
+  --soft:#f2fbf8;
+  --soft-2:#eaf7f3;
+  --ink:#23253c;
+  --body:#3f4657;
+  --muted:#68707e;
+  --line:#e2efeb;
+  --white:#ffffff;
+  --radius:14px;
+  --font:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC","Segoe UI",system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);color:var(--body);background:var(--white);font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+h1,h2,h3{color:var(--ink);line-height:1.3;font-weight:700}
+a{color:var(--green-ink);text-decoration:none;transition:color .15s ease}
+a:hover{color:var(--green-deep)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--green-deep);outline-offset:3px;border-radius:4px}
+img,svg{display:block}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+
+/* ---------- header ---------- */
+.site-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.site-header .wrap{display:flex;align-items:center;gap:28px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--ink);font-size:17px;flex-shrink:0}
+.brand:hover{color:var(--ink)}
+.brand svg{width:26px;height:26px;transition:transform .3s ease}
+.brand:hover svg{transform:rotate(-6deg)}
+.main-nav{display:flex;gap:22px;margin-left:auto}
+.main-nav a{color:var(--body);font-size:15px}
+.main-nav a:hover{color:var(--green-deep)}
+.header-right{display:flex;align-items:center;gap:12px}
+.gh-link{display:flex;align-items:center;gap:6px;color:var(--body);font-size:15px}
+.gh-link svg{width:19px;height:19px;fill:currentColor}
+.lang-toggle{border:1px solid var(--line);background:var(--white);color:var(--body);border-radius:999px;padding:5px 14px;font-size:13.5px;cursor:pointer;font-family:var(--font);transition:border-color .15s ease,color .15s ease}
+.lang-toggle:hover{border-color:var(--green);color:var(--green-deep)}
+@media (max-width:820px){.main-nav{display:none}}
+
+/* ---------- hero ---------- */
+.hero{background:var(--soft);position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;opacity:.5;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.028 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
+.hero .wrap{position:relative;padding-top:76px;text-align:center}
+.eyebrow{display:inline-block;font-size:13px;letter-spacing:.14em;color:var(--green-ink);font-weight:600;border:1px solid #c8ece5;background:#ffffffb8;border-radius:999px;padding:5px 16px;margin-bottom:26px}
+.hero h1{font-size:clamp(2rem,4.6vw,3.4rem);letter-spacing:.01em;max-width:20ch;margin:0 auto 18px}
+.hero .sub{font-size:clamp(1rem,1.6vw,1.15rem);color:var(--body);max-width:56ch;margin:0 auto 30px}
+.cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:26px}
+.btn{display:inline-flex;align-items:center;gap:9px;border-radius:999px;padding:13px 28px;font-size:16px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:background .15s ease,transform .15s ease,border-color .15s ease,color .15s ease}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--green);color:#fff}
+.btn-primary:hover{background:var(--green-deep);color:#fff}
+.btn-ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+.btn-ghost:hover{border-color:var(--green);color:var(--green-deep)}
+.btn svg{width:18px;height:18px;fill:currentColor;flex-shrink:0}
+.trust-chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding-bottom:64px}
+.trust-chips span{font-size:13.5px;color:var(--green-ink);background:#fff;border:1px solid #d7efe9;border-radius:999px;padding:4px 14px}
+.scallop{display:block;height:16px;margin-bottom:-1px;
+  background-image:radial-gradient(circle at 16px -4px,var(--soft) 18px,rgba(0,0,0,0) 19px);
+  background-size:32px 16px;background-repeat:repeat-x}
+
+/* ---------- browser mockup ---------- */
+.mockup{max-width:940px;margin:0 auto 76px;border-radius:16px;background:#fff;box-shadow:0 24px 70px -18px rgba(11,60,52,.28),0 4px 18px rgba(11,60,52,.08);overflow:hidden;text-align:left;position:relative}
+.mockup-bar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#f6f8f8;border-bottom:1px solid #edf1f0}
+.dot{width:11px;height:11px;border-radius:50%}
+.dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+.mockup-url{flex:1;margin-left:8px;background:#fff;border:1px solid #e8edec;border-radius:8px;font-size:12.5px;color:var(--muted);padding:5px 12px;display:flex;align-items:center;gap:6px}
+.mockup-body{display:grid;grid-template-columns:1.5fr 1fr;min-height:330px}
+.mock-video{background:#0f1414;position:relative;display:flex;flex-direction:column;justify-content:flex-end;padding:18px;color:#fff}
+.mock-play-line{position:absolute;top:16px;left:18px;right:18px;font-size:13px;color:#e8f4f1;background:rgba(0,0,0,.45);border-radius:8px;padding:8px 12px;line-height:1.5}
+.mock-subtitle{text-align:center;font-size:14px;margin-bottom:12px;text-shadow:0 1px 4px rgba(0,0,0,.7)}
+.mock-progress{height:4px;border-radius:2px;background:rgba(255,255,255,.25);position:relative;margin-bottom:10px}
+.mock-progress i{position:absolute;left:0;top:0;bottom:0;width:38%;background:var(--green);border-radius:2px}
+.mock-controls{display:flex;gap:14px;align-items:center;font-size:12px;color:#cfd8d6}
+.mock-controls .kbd{margin-left:auto}
+.kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-bottom-width:2px;border-radius:6px;padding:2px 7px;color:#fff}
+.mock-panel{background:#fff;border-left:1px solid #edf1f0;display:flex;flex-direction:column}
+.mock-panel-head{display:flex;align-items:center;gap:7px;padding:12px 14px 8px;font-weight:700;font-size:14px;color:var(--ink)}
+.mock-panel-head svg{width:17px;height:17px}
+.mock-tabs{display:flex;gap:16px;padding:0 14px;border-bottom:1px solid #edf1f0;font-size:12.5px;color:var(--muted)}
+.mock-tabs b{color:var(--green-deep);border-bottom:2px solid var(--green);padding-bottom:7px;font-weight:600}
+.mock-tabs span{padding-bottom:7px}
+.mock-list{padding:10px 14px;display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.mock-chapter{color:var(--body);display:flex;gap:8px;align-items:baseline}
+.mock-chapter time{color:var(--green-deep);font-family:ui-monospace,Menlo,monospace;font-size:11.5px;flex-shrink:0}
+.mock-note{border:1px solid #eef3f2;border-radius:10px;padding:8px 10px;background:#fbfdfd}
+.mock-note time{color:var(--green-deep);font-family:ui-monospace,Menlo,monospace;font-size:11.5px;margin-right:6px}
+.mock-note .shot{margin-top:6px;height:44px;border-radius:6px;background:linear-gradient(120deg,#26413c,#0f1a18 55%,#1d2f2b);position:relative;overflow:hidden}
+.mock-note .shot::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.14) 50%,transparent 60%)}
+@media (max-width:720px){.mockup-body{grid-template-columns:1fr}.mock-panel{border-left:none;border-top:1px solid #edf1f0}.mock-video{min-height:210px}}
+
+/* ---------- sections ---------- */
+section{padding:84px 0}
+.sec-head{text-align:center;max-width:640px;margin:0 auto 52px}
+.sec-kicker{font-size:13px;letter-spacing:.16em;font-weight:600;color:var(--green-ink);margin-bottom:12px}
+.sec-head h2{font-size:clamp(1.6rem,3vw,2.2rem);margin-bottom:14px}
+.sec-head p{color:var(--muted)}
+.alt-bg{background:#fbfefd}
+
+/* install */
+.install-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:880px;margin:0 auto}
+.store-card{border:1px solid var(--line);border-radius:var(--radius);padding:30px 30px 26px;background:#fff;transition:border-color .2s ease,box-shadow .2s ease}
+.store-card:hover{border-color:#bfe8df;box-shadow:0 10px 34px -14px rgba(11,60,52,.18)}
+.store-card .browsers{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.store-card h3{font-size:20px}
+.store-card .store-name{color:var(--green-ink);font-weight:600;font-size:14.5px;margin-bottom:12px}
+.store-card p{font-size:15px;color:var(--body);margin-bottom:10px}
+.store-card .tip{font-size:13.5px;color:var(--muted);background:var(--soft);border-radius:10px;padding:10px 14px;margin-bottom:20px}
+.store-icons{display:flex;gap:8px}
+.store-icons svg{width:22px;height:22px}
+.install-note{text-align:center;color:var(--muted);font-size:14.5px;margin-top:30px}
+.install-note strong{color:var(--body)}
+@media (max-width:720px){.install-grid{grid-template-columns:1fr}}
+
+/* features */
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:36px 40px}
+.feature h3{font-size:17.5px;margin:14px 0 8px;display:flex;align-items:center;gap:8px}
+.feature p{font-size:15px;color:var(--body)}
+.feature .f-icon{width:40px;height:40px;color:var(--green-deep);transition:transform .3s ease}
+.feature:hover .f-icon{transform:translateY(-3px)}
+.feature .f-kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--soft-2);border:1px solid #d3ece5;border-bottom-width:2px;border-radius:5px;padding:1px 6px;color:var(--green-ink)}
+@media (max-width:900px){.feature-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:600px){.feature-grid{grid-template-columns:1fr}}
+
+/* platforms */
+.platform-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:920px;margin:0 auto}
+.platform{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:#fff}
+.platform .st{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.st.ok{background:var(--green)}.st.beta{background:#f6cf68}
+.platform b{color:var(--ink);font-size:15px;display:block}
+.platform small{color:var(--muted);font-size:12.5px}
+.platform-note{text-align:center;color:var(--muted);font-size:13.5px;margin-top:26px}
+.legend{display:inline-flex;gap:16px;margin-left:10px}
+.legend i{font-style:normal;display:inline-flex;align-items:center;gap:5px}
+.legend .st{display:inline-block}
+@media (max-width:820px){.platform-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:540px){.platform-grid{grid-template-columns:1fr}}
+
+/* open source */
+.opensource{background:var(--ink);color:#cdd3e0;text-align:center;position:relative;overflow:hidden}
+.opensource::before{content:"";position:absolute;inset:0;opacity:.6;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
+.opensource .wrap{position:relative}
+.opensource h2{color:#fff;font-size:clamp(1.6rem,3vw,2.2rem);margin-bottom:16px}
+.opensource p{max-width:60ch;margin:0 auto 34px;font-size:16.5px}
+.opensource .btn-ghost{background:transparent;color:#fff;border-color:#4a4e68}
+.opensource .btn-ghost:hover{border-color:var(--green);color:var(--green)}
+.os-points{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:38px}
+.os-points span{font-size:14px;border:1px solid #3b3f58;border-radius:999px;padding:5px 16px;color:#aab1c4}
+
+/* footer */
+.site-footer{border-top:1px solid var(--line);padding:52px 0 40px;background:#fbfdfd}
+.footer-grid{display:flex;flex-wrap:wrap;gap:36px;justify-content:space-between}
+.footer-brand{max-width:300px}
+.footer-brand p{font-size:14px;color:var(--muted);margin-top:12px}
+.footer-links{display:flex;gap:56px;flex-wrap:wrap}
+.footer-links h4{font-size:14px;color:var(--ink);margin-bottom:14px;font-weight:600}
+.footer-links a{display:block;font-size:14px;color:var(--muted);margin-bottom:9px}
+.footer-links a:hover{color:var(--green-deep)}
+.footer-bottom{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+/* reveal */
+.js [data-reveal]{opacity:0;transform:translateY(16px)}
+.js [data-reveal].in{opacity:1;transform:none;transition:opacity .45s ease-out,transform .45s ease-out}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .js [data-reveal]{opacity:1;transform:none;transition:none}
+  *{transition-duration:.01ms !important;animation-duration:.01ms !important}
+}
+</style>
 </head>
 <body>
-  <h1>学知云课记（XZY Notes）</h1>
-  <p>支持 Chrome / Edge / Firefox 的网课笔记扩展，数据全部本地存储、永久免费、开源。</p>
-  <ul>
-    <li><a href="https://github.com/xzynet/xzynotes">GitHub 仓库</a></li>
-    <li><a href="你的Chrome商店链接">Chrome / Edge 安装</a></li>
-    <li><a href="你的Firefox商店链接">Firefox 安装</a></li>
-    <li><a href="https://www.xzynet.com/views/p9XZYNotes/XZYNotes.html">官网介绍</a></li>
-  </ul>
+
+<!-- ===== header ===== -->
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="XZY Notes">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#00D1B2"/><path d="M20 14h16l10 10v26a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4z" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/><path d="M24 34h14M24 42h10" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>
+      <span data-i18n="brand">学知云课记</span>
+    </a>
+    <nav class="main-nav" aria-label="Main">
+      <a href="#install" data-i18n="nav_install">安装</a>
+      <a href="#features" data-i18n="nav_features">功能</a>
+      <a href="#platforms" data-i18n="nav_platforms">支持平台</a>
+      <a href="#opensource" data-i18n="nav_os">开源</a>
+    </nav>
+    <div class="header-right">
+      <a class="gh-link" href="https://github.com/xzynet/xzynotes" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+      <button class="lang-toggle" id="langToggle" type="button" aria-label="Switch language">EN</button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== hero ===== -->
+<section class="hero" id="top" style="padding:0">
+  <div class="wrap">
+    <span class="eyebrow" data-i18n="eyebrow">开源中心 · OPEN SOURCE</span>
+    <h1 data-i18n="h1">让每一段网课，都变成你的知识笔记</h1>
+    <p class="sub" data-i18n="sub">一款免费开源的浏览器扩展。视频截图、时间戳回跳、字幕检索与本地语音转写，都在网课旁完成。</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/xzy-notes/cddgcjiapaahlnaameonmikdcbogabfp" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm0 4.5c1.86 0 3.55.68 4.85 1.8l-2.4 4.15A4.48 4.48 0 0 0 12 10.5h5.98A7.48 7.48 0 0 0 12 4.5zM6.34 8.02l2.4 4.15c.3 1.42 1.6 2.48 3.1 2.48l-3 5.2A7.48 7.48 0 0 1 6.34 8.02zm9.14 4.48l3-5.2a7.5 7.5 0 0 1 1.02 3.74c0 2.9-1.65 5.42-4.07 6.66l-2.4-4.15a4.5 4.5 0 0 0 2.45-1.05z"/></svg>
+        <span data-i18n="cta_chrome">Chrome / Edge 安装</span>
+      </a>
+      <a class="btn btn-ghost" href="https://addons.mozilla.org/firefox/addon/xzy-notes/" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10c0-.4-.03-.8-.07-1.2A10 10 0 0 1 12 22 10 10 0 0 1 4.9 6.1C6.5 3.9 9.1 2 12 2zm6.9 5.2c-.5-1.2-1.4-2.2-2.6-2.8 1.2.4 2.1 1.4 2.6 2.8zM8.5 6.5c2 0 3.8.9 4.9 2.4-.3-.1-.7-.1-1-.1-2.2 0-4 1.8-4 4 0 .4 0 .7.1 1-1-.5-1.7-1.6-1.7-2.8 0-2.5 2-4.5 4.5-4.5H8.5z"/></svg>
+        <span data-i18n="cta_firefox">Firefox 安装</span>
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/xzynet/xzynotes" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+    <div class="trust-chips">
+      <span data-i18n="chip1">MIT 开源</span>
+      <span data-i18n="chip2">永久免费</span>
+      <span data-i18n="chip3">无需登录</span>
+      <span data-i18n="chip4">数据本地存储</span>
+    </div>
+
+    <!-- product mockup -->
+    <div class="mockup" data-reveal>
+      <div class="mockup-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="mockup-url">bilibili.com/video/BV1xx411c7mD</span>
+      </div>
+      <div class="mockup-body">
+        <div class="mock-video">
+          <div class="mock-play-line" data-i18n="mock_line">正在播放：第三章 · 数据结构入门 — 14:22 / 42:10</div>
+          <div class="mock-subtitle" data-i18n="mock_sub">「所以这一步的关键，是先把问题拆解清楚」</div>
+          <div class="mock-progress"><i></i></div>
+          <div class="mock-controls">
+            <span>▶</span><span>14:22</span><span>1080P</span>
+            <span class="kbd">Alt + S</span>
+          </div>
+        </div>
+        <div class="mock-panel">
+          <div class="mock-panel-head">
+            <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#00D1B2"/><path d="M20 14h16l10 10v26a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4z" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/><path d="M24 34h14M24 42h10" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>
+            XZY Notes
+          </div>
+          <div class="mock-tabs"><b data-i18n="mock_tab1">当前课程</b><span data-i18n="mock_tab2">全部课程</span></div>
+          <div class="mock-list">
+            <div class="mock-chapter"><time>12:40</time><span data-i18n="mock_ch1">第三章 · 数据结构入门</span></div>
+            <div class="mock-note">
+              <div><time>14:22</time><span data-i18n="mock_n1">截图 · 问题拆解的思路</span></div>
+              <div class="shot"></div>
+            </div>
+            <div class="mock-note"><div><time>18:05</time><span data-i18n="mock_n2">重点：先定义边界条件，A-B 循环复读</span></div></div>
+            <div class="mock-chapter"><time>21:30</time><span data-i18n="mock_ch2">3.2 常见结构对比</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span class="scallop" aria-hidden="true"></span>
+</section>
+
+<!-- ===== install ===== -->
+<section id="install">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <div class="sec-kicker" data-i18n="install_kicker">INSTALL</div>
+      <h2 data-i18n="install_h">搜索即可安装，听课记录一步到位</h2>
+      <p data-i18n="install_p">无需注册，无需配置。安装后打开网课视频，点击浏览器工具栏中的「学知云课记」图标，即可开始记录。</p>
+    </div>
+    <div class="install-grid">
+      <div class="store-card" data-reveal>
+        <div class="browsers">
+          <div class="store-icons" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#fff" stroke="#e2efeb"/><circle cx="12" cy="12" r="4.4" fill="#4285F4"/><path d="M12 3.6A8.4 8.4 0 0 1 19.3 8h-5.6a4.4 4.4 0 0 0-3.8-2.2L12 3.6z" fill="#EA4335"/><path d="M4.7 8l2.8 4.8a4.4 4.4 0 0 0 4.4 2.9l-2.8 4.7A8.4 8.4 0 0 1 4.7 8z" fill="#FBBC05"/><path d="M19.3 8A8.4 8.4 0 0 1 9.1 20.4l2.8-4.7a4.4 4.4 0 0 0 1.8-3.9V8h5.6z" fill="#34A853"/></svg>
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#fff" stroke="#e2efeb"/><path d="M12 3a9 9 0 1 0 8.7 11.4A8.6 8.6 0 0 1 3.4 9.2 8.9 8.9 0 0 1 12 3z" fill="#0C88C5"/><path d="M12 5.5a6.5 6.5 0 1 0 6.3 8.2A6.2 6.2 0 0 1 5.8 9.6 6.4 6.4 0 0 1 12 5.5z" fill="#37C6E8"/><path d="M12 8a4 4 0 1 0 3.9 5A3.6 3.6 0 0 1 8.4 10 3.9 3.9 0 0 1 12 8z" fill="#0C88C5"/></svg>
+          </div>
+          <h3>Chrome / Edge</h3>
+        </div>
+        <div class="store-name" data-i18n="store1_name">Chrome 网上应用店安装</div>
+        <p data-i18n="store1_p">在 Chrome 应用商店打开扩展页面，点击「添加至 Chrome」即可，自动更新。</p>
+        <div class="tip" data-i18n="store1_tip">Edge 用户：Edge 可以直接安装 Chrome 商店的扩展。首次安装时点击浏览器顶部提示的「允许来自其他商店的扩展」，之后流程与 Chrome 完全一致。</div>
+        <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/xzy-notes/cddgcjiapaahlnaameonmikdcbogabfp" target="_blank" rel="noopener" data-i18n="store1_btn">前往 Chrome 应用商店</a>
+      </div>
+      <div class="store-card" data-reveal>
+        <div class="browsers">
+          <div class="store-icons" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 8.6 5H20c.5 1 .8 2.2.9 3.5A10 10 0 1 1 12 2zm6.4 6.5c-.8-.9-1.9-1.5-3.1-1.6 1 .6 1.7 1.6 1.9 2.8l-1.4 1.3c.5.5 1 .8 1.6.9-.1 1.5-.9 2.8-2.1 3.6 1.1-.3 2.4-.2 3.4.3a8 8 0 0 0-.3-7.3zM7.4 6.2A8 8 0 0 0 4 12c0 .8.1 1.5.3 2.2.6-.9 1.6-1.4 2.7-1.4-.3-.5-.5-1-.5-1.6 0-1.9 1.6-3.5 3.5-3.5.5 0 1 .1 1.4.3A6 6 0 0 0 7.4 6.2z" fill="#FF7139"/><path d="M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z" fill="#FF9408"/></svg>
+          </div>
+          <h3>Firefox</h3>
+        </div>
+        <div class="store-name" data-i18n="store2_name">Firefox 附加组件商店安装</div>
+        <p data-i18n="store2_p">在 Firefox Add-ons 打开扩展页面，点击「添加到 Firefox」，权限确认后即完成安装。</p>
+        <div class="tip" data-i18n="store2_tip">已针对 Firefox 完整适配（sidebarAction 侧边栏），转写模型为 Paraformer，功能与 Chrome 版保持一致。</div>
+        <a class="btn btn-primary" href="https://addons.mozilla.org/firefox/addon/xzy-notes/" target="_blank" rel="noopener" data-i18n="store2_btn">前往 Firefox 附加组件</a>
+      </div>
+    </div>
+    <p class="install-note" data-reveal data-i18n="install_note">也可以直接在两个商店中搜索 <strong>「学知云课记」</strong> 或 <strong>XZY Notes</strong>，认准学知云官方发布。</p>
+  </div>
+</section>
+
+<!-- ===== features ===== -->
+<section id="features" class="alt-bg">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <div class="sec-kicker" data-i18n="feat_kicker">FEATURES</div>
+      <h2 data-i18n="feat_h">不只记下画面，更留住知识的脉络</h2>
+      <p data-i18n="feat_p">少切一次窗口，少拖一次进度条，把更多注意力留给学习。</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature" data-reveal>
+        <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.4"/><path d="M8.5 5l1.2-1.8h4.6L15.5 5"/></svg>
+        <h3><span data-i18n="f1h">截图就是笔记</span><span class="f-kbd">Alt+S</span></h3>
+        <p data-i18n="f1p">一键保存当前视频画面，支持圈画标注，重点内容无需暂停也能记录。</p>
+      </div>
+      <div class="feature" data-reveal>
+        <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        <h3 data-i18n="f2h">时间戳精准回跳</h3>
+        <p data-i18n="f2p">每条笔记都对应视频时刻，点击即可回到原位，重点段落还能 A-B 循环复读。</p>
+      </div>
+      <div class="feature" data-reveal>
+        <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M8.5 10h5M8.5 12.5h3.5"/></svg>
+        <h3 data-i18n="f3h">字幕全文检索</h3>
+        <p data-i18n="f3p">课程字幕变成可搜索的时间轴，找到那一句讲解，不再反复拖动进度条。</p>
+      </div>
+      <div class="feature" data-reveal>
+        <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>
+        <h3 data-i18n="f4h">本地语音转写</h3>
+        <p data-i18n="f4p">没有字幕的课程，也能在浏览器本地转成文字，模型下载后可离线使用。</p>
+      </div>
+      <div class="feature" data-reveal>
+        <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h13"/><circle cx="19" cy="12" r="1.4"/></svg>
+        <h3 data-i18n="f5h">章节大纲整理</h3>
+        <p data-i18n="f5p">把冗长课程梳理成清晰章节，快速了解内容结构，复习更有方向。</p>
+      </div>
+      <div class="feature" data-reveal>
+        <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 21V4.5A1.5 1.5 0 0 1 6.5 3z"/><path d="M14.5 3v4.5H19M9 13l2 2-2 2M13.5 17H16"/></svg>
+        <h3 data-i18n="f6h">Markdown 自由导出</h3>
+        <p data-i18n="f6p">截图、笔记、章节与时间戳一起导出，轻松带入 Obsidian、Notion 等工具。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== platforms ===== -->
+<section id="platforms">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <div class="sec-kicker" data-i18n="plat_kicker">PLATFORMS</div>
+      <h2 data-i18n="plat_h">支持平台</h2>
+      <p data-i18n="plat_p">覆盖主流网课与视频网站，一般 HTML5 视频页也可用通用模式。</p>
+    </div>
+    <div class="platform-grid" data-reveal>
+      <div class="platform"><span class="st ok"></span><div><b>B站</b><small>bilibili.com</small></div></div>
+      <div class="platform"><span class="st ok"></span><div><b data-i18n="p_mooc">中国大学MOOC</b><small>icourse163.org</small></div></div>
+      <div class="platform"><span class="st ok"></span><div><b>YouTube</b><small>youtube.com</small></div></div>
+      <div class="platform"><span class="st beta"></span><div><b data-i18n="p_xtx">学堂在线</b><small>xuetangx.com</small></div></div>
+      <div class="platform"><span class="st beta"></span><div><b data-i18n="p_zhs">智慧树</b><small>zhihuishu.com</small></div></div>
+      <div class="platform"><span class="st ok"></span><div><b data-i18n="p_html5">一般 HTML5 视频页</b><small data-i18n="p_html5s">通用模式 · 按需激活</small></div></div>
+    </div>
+    <p class="platform-note" data-reveal><span data-i18n="plat_note">功能可用性取决于页面实际提供的字幕与媒体格式。</span><span class="legend"><i><span class="st ok"></span><span data-i18n="lg_ok">已支持</span></i><i><span class="st beta"></span><span data-i18n="lg_beta">已适配</span></i></span></p>
+  </div>
+</section>
+
+<!-- ===== open source ===== -->
+<section id="opensource" class="opensource">
+  <div class="wrap" data-reveal>
+    <div class="sec-kicker" style="color:var(--green)" data-i18n="os_kicker">FREE & OPEN SOURCE</div>
+    <h2 data-i18n="os_h">免费开源，也把数据留给自己</h2>
+    <p data-i18n="os_p">无账号、无云同步、无数据上报。课程笔记与截图默认保存在本机，支持 Markdown 导出和本地备份，让学习成果始终由你掌握。</p>
+    <div class="os-points">
+      <span data-i18n="os_b1">MIT License</span>
+      <span data-i18n="os_b2">零网络遥测</span>
+      <span data-i18n="os_b3">IndexedDB 本地存储</span>
+      <span data-i18n="os_b4">zip 全量备份</span>
+    </div>
+    <a class="btn btn-ghost" href="https://github.com/xzynet/xzynotes" target="_blank" rel="noopener">
+      <svg viewBox="0 0 16 16" style="width:18px;height:18px;fill:currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      <span data-i18n="os_btn">在 GitHub 上查看源码</span>
+    </a>
+  </div>
+</section>
+
+<!-- ===== footer ===== -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="#top">
+          <svg viewBox="0 0 64 64" style="width:26px;height:26px" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#00D1B2"/><path d="M20 14h16l10 10v26a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4z" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/><path d="M24 34h14M24 42h10" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>
+          <span data-i18n="brand">学知云课记</span>
+        </a>
+        <p data-i18n="footer_tag">开源网课笔记扩展 · Local-first video notes, subtitles and transcription.</p>
+      </div>
+      <div class="footer-links">
+        <div>
+          <h4 data-i18n="fl1">产品</h4>
+          <a href="https://www.xzynet.com/views/p9XZYNotes/XZYNotes.html" target="_blank" rel="noopener" data-i18n="fl1a">官网产品介绍</a>
+          <a href="https://www.xzynet.com/" target="_blank" rel="noopener" data-i18n="fl1b">学知云官网</a>
+        </div>
+        <div>
+          <h4 data-i18n="fl2">下载</h4>
+          <a href="https://chromewebstore.google.com/detail/xzy-notes/cddgcjiapaahlnaameonmikdcbogabfp" target="_blank" rel="noopener">Chrome Web Store</a>
+          <a href="https://addons.mozilla.org/firefox/addon/xzy-notes/" target="_blank" rel="noopener">Firefox Add-ons</a>
+        </div>
+        <div>
+          <h4 data-i18n="fl3">开源</h4>
+          <a href="https://github.com/xzynet/xzynotes" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://github.com/xzynet/xzynotes/issues" target="_blank" rel="noopener" data-i18n="fl3b">问题反馈</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>MIT License © <a href="https://github.com/xzynet" target="_blank" rel="noopener">xzy</a> · <span data-i18n="footer_by">学知云出品</span></span>
+      <span>xzynet.github.io</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.documentElement.classList.add('js');
+
+const I18N = {
+  zh: {
+    _title: "学知云课记 XZY Notes — 开源网课笔记扩展",
+    _toggle: "EN",
+    brand: "学知云课记",
+    nav_install: "安装", nav_features: "功能", nav_platforms: "支持平台", nav_os: "开源",
+    eyebrow: "开源中心 · OPEN SOURCE",
+    h1: "让每一段网课，都变成你的知识笔记",
+    sub: "一款免费开源的浏览器扩展。视频截图、时间戳回跳、字幕检索与本地语音转写，都在网课旁完成。",
+    cta_chrome: "Chrome / Edge 安装", cta_firefox: "Firefox 安装",
+    chip1: "MIT 开源", chip2: "永久免费", chip3: "无需登录", chip4: "数据本地存储",
+    mock_line: "正在播放：第三章 · 数据结构入门 — 14:22 / 42:10",
+    mock_sub: "「所以这一步的关键，是先把问题拆解清楚」",
+    mock_tab1: "当前课程", mock_tab2: "全部课程",
+    mock_ch1: "第三章 · 数据结构入门", mock_n1: "截图 · 问题拆解的思路",
+    mock_n2: "重点：先定义边界条件，A-B 循环复读", mock_ch2: "3.2 常见结构对比",
+    install_kicker: "INSTALL",
+    install_h: "搜索即可安装，听课记录一步到位",
+    install_p: "无需注册，无需配置。安装后打开网课视频，点击浏览器工具栏中的「学知云课记」图标，即可开始记录。",
+    store1_name: "Chrome 网上应用店安装",
+    store1_p: "在 Chrome 应用商店打开扩展页面，点击「添加至 Chrome」即可，自动更新。",
+    store1_tip: "Edge 用户：Edge 可以直接安装 Chrome 商店的扩展。首次安装时点击浏览器顶部提示的「允许来自其他商店的扩展」，之后流程与 Chrome 完全一致。",
+    store1_btn: "前往 Chrome 应用商店",
+    store2_name: "Firefox 附加组件商店安装",
+    store2_p: "在 Firefox Add-ons 打开扩展页面，点击「添加到 Firefox」，权限确认后即完成安装。",
+    store2_tip: "已针对 Firefox 完整适配（sidebarAction 侧边栏），转写模型为 Paraformer，功能与 Chrome 版保持一致。",
+    store2_btn: "前往 Firefox 附加组件",
+    install_note: "也可以直接在两个商店中搜索 <strong>「学知云课记」</strong> 或 <strong>XZY Notes</strong>，认准学知云官方发布。",
+    feat_kicker: "FEATURES",
+    feat_h: "不只记下画面，更留住知识的脉络",
+    feat_p: "少切一次窗口，少拖一次进度条，把更多注意力留给学习。",
+    f1h: "截图就是笔记", f1p: "一键保存当前视频画面，支持圈画标注，重点内容无需暂停也能记录。",
+    f2h: "时间戳精准回跳", f2p: "每条笔记都对应视频时刻，点击即可回到原位，重点段落还能 A-B 循环复读。",
+    f3h: "字幕全文检索", f3p: "课程字幕变成可搜索的时间轴，找到那一句讲解，不再反复拖动进度条。",
+    f4h: "本地语音转写", f4p: "没有字幕的课程，也能在浏览器本地转成文字，模型下载后可离线使用。",
+    f5h: "章节大纲整理", f5p: "把冗长课程梳理成清晰章节，快速了解内容结构，复习更有方向。",
+    f6h: "Markdown 自由导出", f6p: "截图、笔记、章节与时间戳一起导出，轻松带入 Obsidian、Notion 等工具。",
+    plat_kicker: "PLATFORMS",
+    plat_h: "支持平台",
+    plat_p: "覆盖主流网课与视频网站，一般 HTML5 视频页也可用通用模式。",
+    p_mooc: "中国大学MOOC", p_xtx: "学堂在线", p_zhs: "智慧树",
+    p_html5: "一般 HTML5 视频页", p_html5s: "通用模式 · 按需激活",
+    plat_note: "功能可用性取决于页面实际提供的字幕与媒体格式。",
+    lg_ok: "已支持", lg_beta: "已适配",
+    os_kicker: "FREE & OPEN SOURCE",
+    os_h: "免费开源，也把数据留给自己",
+    os_p: "无账号、无云同步、无数据上报。课程笔记与截图默认保存在本机，支持 Markdown 导出和本地备份，让学习成果始终由你掌握。",
+    os_b1: "MIT License", os_b2: "零网络遥测", os_b3: "IndexedDB 本地存储", os_b4: "zip 全量备份",
+    os_btn: "在 GitHub 上查看源码",
+    footer_tag: "开源网课笔记扩展 · Local-first video notes, subtitles and transcription.",
+    fl1: "产品", fl1a: "官网产品介绍", fl1b: "学知云官网",
+    fl2: "下载", fl3: "开源", fl3b: "问题反馈",
+    footer_by: "学知云出品"
+  },
+  en: {
+    _title: "XZY Notes — Open-source video course notes",
+    _toggle: "中文",
+    brand: "XZY Notes",
+    nav_install: "Install", nav_features: "Features", nav_platforms: "Platforms", nav_os: "Open Source",
+    eyebrow: "OPEN SOURCE",
+    h1: "Turn every online course into your knowledge notes",
+    sub: "A free, open-source browser extension. Screenshots, timestamp jump-back, subtitle search and local speech transcription — right beside your course video.",
+    cta_chrome: "Add to Chrome / Edge", cta_firefox: "Add to Firefox",
+    chip1: "MIT License", chip2: "Free forever", chip3: "No login", chip4: "Local-first storage",
+    mock_line: "Now playing: Ch.3 · Intro to Data Structures — 14:22 / 42:10",
+    mock_sub: "\u201CThe key here is to break the problem down first.\u201D",
+    mock_tab1: "This course", mock_tab2: "All courses",
+    mock_ch1: "Ch.3 · Intro to Data Structures", mock_n1: "Screenshot · problem breakdown",
+    mock_n2: "Key: define edge cases first, A-B loop", mock_ch2: "3.2 Comparing structures",
+    install_kicker: "INSTALL",
+    install_h: "Install in one search, note in one click",
+    install_p: "No sign-up, no configuration. Open a course video after installing, click the XZY Notes icon in the toolbar, and start taking notes.",
+    store1_name: "Install from the Chrome Web Store",
+    store1_p: "Open the listing in the Chrome Web Store and click \u201CAdd to Chrome\u201D. Updates are automatic.",
+    store1_tip: "Edge users: Edge installs Chrome Web Store extensions directly. On first install, allow \u201Cextensions from other stores\u201D in the browser prompt — everything after that works exactly like Chrome.",
+    store1_btn: "Open Chrome Web Store",
+    store2_name: "Install from Firefox Add-ons",
+    store2_p: "Open the listing on Firefox Add-ons and click \u201CAdd to Firefox\u201D, then confirm the permissions.",
+    store2_tip: "Fully adapted for Firefox (sidebarAction), with the Paraformer transcription model — feature-parity with the Chrome build.",
+    store2_btn: "Open Firefox Add-ons",
+    install_note: "You can also search <strong>\u201CXZY Notes\u201D</strong> or <strong>学知云课记</strong> in either store — look for the official XZY release.",
+    feat_kicker: "FEATURES",
+    feat_h: "Keep the structure of knowledge, not just frames",
+    feat_p: "One less window switch, one less progress-bar drag — more attention for learning.",
+    f1h: "Screenshots as notes", f1p: "Capture the current video frame in one keystroke, annotate with shapes — no pausing needed.",
+    f2h: "Timestamp jump-back", f2p: "Every note maps to a video moment. Click to seek back; loop key passages with A-B replay.",
+    f3h: "Full-text subtitle search", f3p: "Course subtitles become a searchable timeline. Find that one explanation without scrubbing.",
+    f4h: "Local speech transcription", f4p: "Courses without subtitles are transcribed locally in your browser. Models work offline once downloaded.",
+    f5h: "Chapter outlines", f5p: "Long lectures organized into clear chapters, so review has a direction.",
+    f6h: "Markdown export", f6p: "Export screenshots, notes, chapters and timestamps together — ready for Obsidian and Notion.",
+    plat_kicker: "PLATFORMS",
+    plat_h: "Supported platforms",
+    plat_p: "Major course and video sites, plus a generic mode for standard HTML5 video pages.",
+    p_mooc: "icourse163 MOOC", p_xtx: "XueTangX", p_zhs: "Zhihuishu",
+    p_html5: "HTML5 video pages", p_html5s: "Generic mode · on demand",
+    plat_note: "Feature availability depends on the subtitles and media formats each page provides.",
+    lg_ok: "Supported", lg_beta: "Adapted",
+    os_kicker: "FREE & OPEN SOURCE",
+    os_h: "Free and open source — your data stays yours",
+    os_p: "No accounts, no cloud sync, no telemetry. Notes and screenshots stay on your device by default, with Markdown export and full local backup.",
+    os_b1: "MIT License", os_b2: "Zero telemetry", os_b3: "IndexedDB storage", os_b4: "Full zip backup",
+    os_btn: "View source on GitHub",
+    footer_tag: "Open-source course notes extension · 学知云课记.",
+    fl1: "Product", fl1a: "Official product page", fl1b: "XZY website",
+    fl2: "Download", fl3: "Open Source", fl3b: "Issues",
+    footer_by: "by XZY"
+  }
+};
+
+const htmlEl = document.documentElement;
+const toggleBtn = document.getElementById('langToggle');
+
+function applyLang(lang){
+  const dict = I18N[lang] || I18N.zh;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key] !== undefined) el.innerHTML = dict[key];
+  });
+  document.title = dict._title;
+  toggleBtn.textContent = dict._toggle;
+  htmlEl.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  try { localStorage.setItem('xzy-lang', lang); } catch(e) {}
+}
+
+let lang = 'zh';
+try { lang = localStorage.getItem('xzy-lang'); } catch(e) {}
+if (!lang) lang = (navigator.language || 'zh').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+applyLang(lang);
+
+toggleBtn.addEventListener('click', () => {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  applyLang(lang);
+});
+
+/* scroll reveal (content is visible by default; JS only adds the entrance) */
+const revealEls = document.querySelectorAll('[data-reveal]');
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => io.observe(el));
+  setTimeout(() => revealEls.forEach(el => el.classList.add('in')), 2500); /* fallback */
+} else {
+  revealEls.forEach(el => el.classList.add('in'));
+}
+</script>
 </body>
 </html>
